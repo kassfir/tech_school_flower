@@ -48,6 +48,7 @@ class MyVideoCapture:
     def __init__(self, video_source=0):
         # Open the video source
         self.vid = cv2.VideoCapture(video_source)
+        #print(self.vid)
         if not self.vid.isOpened():
             raise ValueError("Unable to open video source", video_source)
 
@@ -72,4 +73,5 @@ class MyVideoCapture:
             self.vid.release()
 
 # Create a window and pass it to the Application object
-App(tkinter.Tk(), "Tkinter and OpenCV")
+videoSource = "text.mp4"
+App(tkinter.Tk(), videoSource)
