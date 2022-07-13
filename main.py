@@ -2,6 +2,7 @@ import tkinter
 import cv2
 import PIL.Image, PIL.ImageTk
 import time
+import os 
 
 class App:
     def __init__(self, window, window_title, video_source=0):
@@ -73,5 +74,7 @@ class MyVideoCapture:
             self.vid.release()
 
 # Create a window and pass it to the Application object
-videoSource = "text.mp4"
+videoSource = os.getcwd() + "\\text.mp4"
+import os.path as ospath
+print(ospath.realpath(path=videoSource, strict=True))
 App(tkinter.Tk(), videoSource)
