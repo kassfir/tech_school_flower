@@ -1,63 +1,75 @@
+import tkinter
 import cv2
-import numpy as np
+import PIL.Image, PIL.ImageTk
+import time
 
-videoName = yourVideoPathAndName #'DJI_0209.MP4'
+class App:
+    def __init__(self, window, window_title, video_source=0):
+        self.window = window
+        self.window.title(window_title)
+        self.video_source = video_source
 
-#create a videoCapture Object (this allow to read frames one by one)
-video = cv2.VideoCapture(videoName)
-#check it's ok
-if video.isOpened():
-    print('Video Succefully opened')
-else:
-    print('Something went wrong check if the video name and path is correct')
+        # open video source (by default this will try to open the computer webcam)
+        self.vid = MyVideoCapture(self.video_source)
+
+        # Create a canvas that can fit the above video source size
+        self.canvas = tkinter.Canvas(window, width = self.vid.width, height = self.vid.height)
+        self.canvas.pack()
+
+        # Button that lets the user take a snapshot
+        self.btn_snapshot=tkinter.Button(window, text="Snapshot", width=50, command=self.snapshot)
+        self.btn_snapshot.pack(anchor=tkinter.CENTER, expand=True)
+
+        # After it is called once, the update method will be automatically called every delay milliseconds
+        self.delay = 15
+        self.update()
+
+        self.window.mainloop()
+
+    def snapshot(self):
+        # Get a frame from the video source
+        ret, frame = self.vid.get_frame()
+
+        if ret:
+            cv2.imwrite("frame-" + time.strftime("%d-%m-%Y-%H-%M-%S") + ".jpg", cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+
+    def update(self):
+        # Get a frame from the video source
+        ret, frame = self.vid.get_frame()
+
+        if ret:
+            self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame))
+            self.canvas.create_image(0, 0, image = self.photo, anchor = tkinter.NW)
+
+        self.window.after(self.delay, self.update)
 
 
-#define a scale lvl for visualization
-scaleLevel = 3 #it means reduce the size to 2**(scaleLevel-1)
+class MyVideoCapture:
+    def __init__(self, video_source=0):
+        # Open the video source
+        self.vid = cv2.VideoCapture(video_source)
+        if not self.vid.isOpened():
+            raise ValueError("Unable to open video source", video_source)
 
+        # Get video source width and height
+        self.width = self.vid.get(cv2.CAP_PROP_FRAME_WIDTH)
+        self.height = self.vid.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
-# windowName = 'Video Reproducer'
-# cv2.namedWindow(windowName )
-# #let's reproduce the video
-# while True:
-#     ret,frame = video.read() #read a single frame 
-#     if not ret: #this mean it could not read the frame 
-#          print("Could not read the frame")   
-#          cv2.destroyWindow(windowName)
-#          break
+    def get_frame(self):
+        if self.vid.isOpened():
+            ret, frame = self.vid.read()
+            if ret:
+                # Return a boolean success flag and the current frame converted to BGR
+                return (ret, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+            else:
+                return (ret, None)
+        else:
+            return (ret, None)
 
-#     reescaled_frame  = frame
-#     for i in range(scaleLevel-1):
-#         reescaled_frame = cv2.pyrDown(reescaled_frame)
+    # Release the video source when the object is destroyed
+    def __del__(self):
+        if self.vid.isOpened():
+            self.vid.release()
 
-#     cv2.imshow(windowName, reescaled_frame )
-
-#     waitKey = (cv2.waitKey(1) & 0xFF)
-#     if  waitKey == ord('q'): #if Q pressed you could do something else with other keypress
-#          print("closing video and exiting")
-#          cv2.destroyWindow(windowName)
-#          video.release()
-#          break
-while(video.isOpened()):
-      
-  # Capture frame-by-frame
-  ret, frame = video.read()
-  if ret == True:
-   
-    # Display the resulting frame
-    cv2.imshow('Frame', frame)
-   
-    # Press Q on keyboard to  exit
-    if cv2.waitKey(25) & 0xFF == ord('q'):
-      break
-   
-  # Break the loop
-  else: 
-    break
-   
-# When everything done, release 
-# the video capture object
-video.release()
-   
-# Closes all the frames
-cv2.destroyAllWindows()
+# Create a window and pass it to the Application object
+App(tkinter.Tk(), "Tkinter and OpenCV")
