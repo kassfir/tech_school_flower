@@ -17,9 +17,8 @@ class App:
         self.canvas = tkinter.Canvas(window, width = self.vid.width, height = self.vid.height)
         self.canvas.pack()
 
-        # Button that lets the user take a snapshot
-        self.btn_snapshot=tkinter.Button(window, text="Snapshot", width=50, command=self.snapshot)
-        self.btn_snapshot.pack(anchor=tkinter.CENTER, expand=True)
+        #make the window fullscreen
+        self.window.attributes('-fullscreen', True)
 
         # After it is called once, the update method will be automatically called every delay milliseconds
         self.delay = 15
@@ -49,7 +48,7 @@ class MyVideoCapture:
     def __init__(self, video_source=0):
         # Open the video source
         self.vid = cv2.VideoCapture(video_source)
-        #print(self.vid)
+
         if not self.vid.isOpened():
             raise ValueError("Unable to open video source", video_source)
 
@@ -75,6 +74,5 @@ class MyVideoCapture:
 
 # Create a window and pass it to the Application object
 videoSource = os.getcwd() + "\\text.mp4"
-import os.path as ospath
-print(ospath.realpath(path=videoSource, strict=True))
-App(tkinter.Tk(), videoSource)
+
+App(tkinter.Tk(), videoSource, video_source=videoSource)
