@@ -1,8 +1,11 @@
 import tkinter
 import cv2
 import PIL.Image, PIL.ImageTk
-import time
 import os 
+import keyboard
+import threading
+from sys import stdin
+from queue import Queue
 
 class App:
     def __init__(self, window, window_title, video_source=0, loop_source=0):
@@ -17,12 +20,21 @@ class App:
         # open video source (by default this will try to open the computer webcam)
         self.vid = MyVideoCapture(self.video_source)
 
+        self.currently_playing = self.loop
+
         # Create a canvas that can fit the above video source size
         self.canvas = tkinter.Canvas(window, width = 1920, height = 1080)
         self.canvas.pack()
 
         #make the window fullscreen
         self.window.attributes('-fullscreen', True)
+
+        #creates a thread to enable listeners
+        input_thread = threading.Thread(target=self.add_input)
+        input_thread.daemon = True
+        input_thread.start()
+
+        
 
         # After it is called once, the update method will be automatically called every delay milliseconds
         self.delay = 15
@@ -32,13 +44,18 @@ class App:
 
     def update(self):
         # Get a frame from the video source
-        ret, frame = self.loop.get_frame()
+        ret, frame = self.currently_playing.get_frame()
 
         if ret:
             self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame))
             self.canvas.create_image(0, 0, image = self.photo, anchor = tkinter.NW)
 
         self.window.after(self.delay, self.update)
+
+    def add_input(self):
+        while True:
+            key = keyboard.read_key()
+            print (key)
 
 
 class MyVideoCapture:
@@ -71,6 +88,7 @@ class MyVideoCapture:
 
             if ret:
                 # Return a boolean success flag and the current frame converted to BGR
+                # self.vid.set(cv2.CAP_PROP_POS_FRAMES, 0)
                 return (ret, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
             else:
                 return (ret, None)
